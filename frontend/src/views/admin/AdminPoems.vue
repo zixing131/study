@@ -1,9 +1,11 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { api } from '../../api/http'
+import AdminModal from '../../components/AdminModal.vue'
 
 const list = ref([])
 const editingId = ref(null)
+const modalOpen = ref(false)
 const form = reactive(emptyForm())
 const message = ref('')
 
@@ -21,9 +23,11 @@ async function load() {
   list.value = await api.adminListPoems()
 }
 
-function reset() {
+function openCreate() {
   editingId.value = null
   Object.assign(form, emptyForm())
+  message.value = ''
+  modalOpen.value = true
 }
 
 function edit(item) {
@@ -35,6 +39,15 @@ function edit(item) {
     linesText: (item.lines || []).join('\n'),
     sortOrder: item.sortOrder,
   })
+  message.value = ''
+  modalOpen.value = true
+}
+
+function closeModal() {
+  modalOpen.value = false
+  editingId.value = null
+  Object.assign(form, emptyForm())
+  message.value = ''
 }
 
 async function save() {
@@ -48,8 +61,8 @@ async function save() {
       sortOrder: form.sortOrder,
     }, editingId.value)
     message.value = '保存成功'
-    reset()
     await load()
+    closeModal()
   } catch (e) {
     message.value = e.message
   }
@@ -66,21 +79,11 @@ onMounted(load)
 
 <template>
   <div>
-    <h2>{{ editingId ? '编辑古诗' : '新增古诗' }}</h2>
-    <div class="form">
-      <input v-model="form.title" placeholder="标题" />
-      <input v-model="form.author" placeholder="作者" />
-      <input v-model="form.dynasty" placeholder="朝代" />
-      <input v-model.number="form.sortOrder" type="number" placeholder="排序" />
-      <textarea v-model="form.linesText" rows="5" placeholder="诗句，每行一句"></textarea>
-    </div>
-    <div class="ops">
-      <button class="btn btn-sun" @click="save">保存</button>
-      <button class="btn btn-ghost" @click="reset">清空</button>
-      <span v-if="message" class="msg">{{ message }}</span>
+    <div class="toolbar">
+      <h2>题库列表（{{ list.length }}）</h2>
+      <button class="btn btn-sun" @click="openCreate">新增古诗</button>
     </div>
 
-    <h2>题库列表（{{ list.length }}）</h2>
     <table>
       <thead>
         <tr><th>标题</th><th>作者</th><th>诗句</th><th>排序</th><th>操作</th></tr>
@@ -98,15 +101,41 @@ onMounted(load)
         </tr>
       </tbody>
     </table>
+
+    <AdminModal
+      :open="modalOpen"
+      :title="editingId ? '编辑古诗' : '新增古诗'"
+      @close="closeModal"
+    >
+      <div class="form">
+        <input v-model="form.title" placeholder="标题" />
+        <input v-model="form.author" placeholder="作者" />
+        <input v-model="form.dynasty" placeholder="朝代" />
+        <input v-model.number="form.sortOrder" type="number" placeholder="排序" />
+        <textarea v-model="form.linesText" rows="5" placeholder="诗句，每行一句"></textarea>
+      </div>
+      <template #footer>
+        <span v-if="message" class="msg">{{ message }}</span>
+        <button class="btn btn-ghost" @click="closeModal">取消</button>
+        <button class="btn btn-sun" @click="save">保存</button>
+      </template>
+    </AdminModal>
   </div>
 </template>
 
 <style scoped>
-h2 { font-family: var(--font-display); margin-bottom: 12px; }
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+h2 { font-family: var(--font-display); margin: 0; }
 .form { display: grid; gap: 10px; grid-template-columns: repeat(2, 1fr); }
 textarea { grid-column: 1 / -1; resize: vertical; }
-.ops { display: flex; gap: 10px; align-items: center; margin: 12px 0 20px; }
-.msg { color: var(--mint-deep); font-weight: 800; }
+.msg { color: #e85d5d; font-weight: 800; margin-right: auto; }
 .link { background: none; color: var(--sky-deep); font-weight: 800; cursor: pointer; margin-right: 8px; }
 .link.danger { color: #e85d5d; }
 </style>
