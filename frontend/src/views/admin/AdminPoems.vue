@@ -2,12 +2,15 @@
 import { onMounted, reactive, ref } from 'vue'
 import { api } from '../../api/http'
 import AdminModal from '../../components/AdminModal.vue'
+import { asInt, collectErrors, isBlank, required, nonNegInt } from '../../utils/validate'
 
 const list = ref([])
 const editingId = ref(null)
 const modalOpen = ref(false)
 const form = reactive(emptyForm())
+const errors = reactive(emptyErrors())
 const message = ref('')
+const saving = ref(false)
 
 function emptyForm() {
   return {
@@ -19,6 +22,21 @@ function emptyForm() {
   }
 }
 
+function emptyErrors() {
+  return {
+    title: '',
+    author: '',
+    dynasty: '',
+    linesText: '',
+    sortOrder: '',
+  }
+}
+
+function clearErrors() {
+  Object.assign(errors, emptyErrors())
+  message.value = ''
+}
+
 async function load() {
   list.value = await api.adminListPoems()
 }
@@ -26,7 +44,7 @@ async function load() {
 function openCreate() {
   editingId.value = null
   Object.assign(form, emptyForm())
-  message.value = ''
+  clearErrors()
   modalOpen.value = true
 }
 
@@ -39,7 +57,7 @@ function edit(item) {
     linesText: (item.lines || []).join('\n'),
     sortOrder: item.sortOrder,
   })
-  message.value = ''
+  clearErrors()
   modalOpen.value = true
 }
 
@@ -47,24 +65,54 @@ function closeModal() {
   modalOpen.value = false
   editingId.value = null
   Object.assign(form, emptyForm())
-  message.value = ''
+  clearErrors()
+  saving.value = false
+}
+
+function parseLines() {
+  return form.linesText.split(/\n+/).map((s) => s.trim()).filter(Boolean)
+}
+
+function validateLines(text) {
+  if (isBlank(text)) return '诗句不能为空'
+  if (!parseLines().length) return '请至少填写一行诗句'
+  return null
+}
+
+function validate() {
+  const result = collectErrors({
+    title: required(form.title, '标题'),
+    author: required(form.author, '作者'),
+    linesText: validateLines(form.linesText),
+    sortOrder: nonNegInt(form.sortOrder, '排序'),
+  })
+  Object.assign(errors, emptyErrors(), result.errors)
+  message.value = result.first
+  return result.ok
+}
+
+function clearField(key) {
+  errors[key] = ''
+  if (message.value) message.value = ''
 }
 
 async function save() {
-  const lines = form.linesText.split(/\n+/).map((s) => s.trim()).filter(Boolean)
+  if (!validate()) return
+  saving.value = true
   try {
     await api.adminSavePoem({
-      title: form.title,
-      author: form.author,
-      dynasty: form.dynasty,
-      lines,
-      sortOrder: form.sortOrder,
+      title: form.title.trim(),
+      author: form.author.trim(),
+      dynasty: (form.dynasty || '').trim() || '唐',
+      lines: parseLines(),
+      sortOrder: asInt(form.sortOrder, 0),
     }, editingId.value)
-    message.value = '保存成功'
     await load()
     closeModal()
   } catch (e) {
-    message.value = e.message
+    message.value = e.message || '保存失败'
+  } finally {
+    saving.value = false
   }
 }
 
@@ -107,17 +155,45 @@ onMounted(load)
       :title="editingId ? '编辑古诗' : '新增古诗'"
       @close="closeModal"
     >
-      <div class="form">
-        <input v-model="form.title" placeholder="标题" />
-        <input v-model="form.author" placeholder="作者" />
-        <input v-model="form.dynasty" placeholder="朝代" />
-        <input v-model.number="form.sortOrder" type="number" placeholder="排序" />
-        <textarea v-model="form.linesText" rows="5" placeholder="诗句，每行一句"></textarea>
-      </div>
+      <form class="form-grid poem-form" @submit.prevent="save">
+        <div class="field" :class="{ 'is-invalid': errors.title }">
+          <label>标题<span class="req">*</span></label>
+          <input v-model="form.title" placeholder="标题" @input="clearField('title')" />
+          <div class="hint">{{ errors.title }}</div>
+        </div>
+        <div class="field" :class="{ 'is-invalid': errors.author }">
+          <label>作者<span class="req">*</span></label>
+          <input v-model="form.author" placeholder="作者" @input="clearField('author')" />
+          <div class="hint">{{ errors.author }}</div>
+        </div>
+        <div class="field">
+          <label>朝代</label>
+          <input v-model="form.dynasty" placeholder="如：唐" />
+          <div class="hint"></div>
+        </div>
+        <div class="field" :class="{ 'is-invalid': errors.sortOrder }">
+          <label>排序<span class="req">*</span></label>
+          <input v-model.number="form.sortOrder" type="number" min="0" step="1" @input="clearField('sortOrder')" />
+          <div class="hint">{{ errors.sortOrder }}</div>
+        </div>
+        <div class="field span-2" :class="{ 'is-invalid': errors.linesText }">
+          <label>诗句<span class="req">*</span></label>
+          <textarea
+            v-model="form.linesText"
+            rows="5"
+            placeholder="每行一句"
+            @input="clearField('linesText')"
+          ></textarea>
+          <div class="hint">{{ errors.linesText }}</div>
+        </div>
+        <button class="sr-only" type="submit">保存</button>
+      </form>
       <template #footer>
         <span v-if="message" class="msg">{{ message }}</span>
-        <button class="btn btn-ghost" @click="closeModal">取消</button>
-        <button class="btn btn-sun" @click="save">保存</button>
+        <button type="button" class="btn btn-ghost" @click="closeModal">取消</button>
+        <button type="button" class="btn btn-sun" :disabled="saving" @click="save">
+          {{ saving ? '保存中…' : '保存' }}
+        </button>
       </template>
     </AdminModal>
   </div>
@@ -133,9 +209,19 @@ onMounted(load)
   flex-wrap: wrap;
 }
 h2 { font-family: var(--font-display); margin: 0; }
-.form { display: grid; gap: 10px; grid-template-columns: repeat(2, 1fr); }
-textarea { grid-column: 1 / -1; resize: vertical; }
 .msg { color: #e85d5d; font-weight: 800; margin-right: auto; }
 .link { background: none; color: var(--sky-deep); font-weight: 800; cursor: pointer; margin-right: 8px; }
 .link.danger { color: #e85d5d; }
+.poem-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+textarea { resize: vertical; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
 </style>

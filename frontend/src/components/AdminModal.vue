@@ -28,8 +28,8 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="mask" @click.self="emit('close')">
-      <div class="dialog" role="dialog" aria-modal="true">
+    <div v-if="open" class="mask admin-modal" @click.self="emit('close')">
+      <div class="dialog" role="dialog" aria-modal="true" :aria-label="title">
         <header class="head">
           <h3>{{ title }}</h3>
           <button type="button" class="x" aria-label="关闭" @click="emit('close')">×</button>
