@@ -30,9 +30,15 @@ admin:
   username: admin
   password: zixing131
 
-# 有道发音本地缓存目录
+# 发音缓存：优先 Edge 神经网络 TTS，失败回退 baidu → google → youdao
 voice:
   cache-dir: ./data/audio
+  providers: edge,baidu,google,youdao
+  edge:
+    voice-zh: zh-CN-XiaoxiaoNeural
+    voice-en: en-US-JennyNeural
+    voice-en-alt: en-US-GuyNeural
+
 
 logging:
   level:

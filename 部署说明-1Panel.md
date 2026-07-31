@@ -144,6 +144,6 @@ tail -f /opt/kids-learn/kids-learn-8050/app.log
 ## 8. 注意
 
 - 首次启动会预缓存发音，可能持续几分钟，属正常
-- 服务器需能访问外网 `dict.youdao.com`（仅首次拉发音；之后走本地缓存）
+- 服务器需能访问外网（首次拉发音；之后走本地缓存）：优先 `speech.platform.bing.com`（Edge TTS），回退 `fanyi.baidu.com` / `translate.google.com` / `dict.youdao.com`
 - Java 版本必须 ≥ 21
 - `kids-learn.jar` 与 `lib/` 必须同目录；启动命令仍用 `-jar kids-learn.jar`（Class-Path 会自动加载依赖）

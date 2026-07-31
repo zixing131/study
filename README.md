@@ -7,7 +7,7 @@
 - 后端：Spring Boot 4 + MyBatis + SQLite（MVC：controller / service / dao / xml / config）
 - 数据库文件：`backend/data/kidslearn.db`
 - 前端：Vue 3 + Vite + Vue Router + Pinia
-- 朗读：有道真人发音，**服务端落盘缓存**（`backend/data/audio/`）；数字 1–100 启动预热，其它发音首次拉取后复用；失败回退浏览器 TTS
+- 朗读：优先 **微软 Edge 神经网络 TTS**（晓晓/Jenny），失败依次回退百度 / Google / 有道；**服务端落盘缓存**（`backend/data/audio/`）；数字 1–100 启动预热；仍失败则回退浏览器 TTS
 - 音效 / 动画：WebAudio + CSS 鲜花 / 哭脸反馈
 
 ## 快速启动
