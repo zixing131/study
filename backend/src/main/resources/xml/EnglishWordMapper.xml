@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.study.kids.dao.EnglishWordMapper">
+
+    <resultMap id="BaseMap" type="com.study.kids.entity.EnglishWord">
+        <id property="id" column="id"/>
+        <result property="word" column="word"/>
+        <result property="phonetic" column="phonetic"/>
+        <result property="meaning" column="meaning"/>
+        <result property="category" column="category"/>
+        <result property="example" column="example"/>
+        <result property="emoji" column="emoji"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="BaseMap">
+        SELECT * FROM english_word ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <select id="findByCategory" resultMap="BaseMap">
+        SELECT * FROM english_word
+        WHERE category = #{category}
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT * FROM english_word WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO english_word (word, phonetic, meaning, category, example, emoji, sort_order)
+        VALUES (#{word}, #{phonetic}, #{meaning}, #{category}, #{example}, #{emoji}, #{sortOrder})
+    </insert>
+
+    <update id="update">
+        UPDATE english_word
+        SET word = #{word},
+            phonetic = #{phonetic},
+            meaning = #{meaning},
+            category = #{category},
+            example = #{example},
+            emoji = #{emoji},
+            sort_order = #{sortOrder}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM english_word WHERE id = #{id}
+    </delete>
+</mapper>

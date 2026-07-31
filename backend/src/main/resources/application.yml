@@ -1,0 +1,39 @@
+server:
+  port: 8050
+
+spring:
+  application:
+    name: kids-learn
+  datasource:
+    url: jdbc:sqlite:./data/kidslearn.db
+    driver-class-name: org.sqlite.JDBC
+    username:
+    password:
+    hikari:
+      # SQLite 写锁较弱，单连接更稳
+      maximum-pool-size: 1
+      connection-init-sql: PRAGMA foreign_keys=ON
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      encoding: UTF-8
+
+mybatis:
+  mapper-locations: classpath:xml/*.xml
+  type-aliases-package: com.study.kids.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+# 管理端固定账号密码
+admin:
+  username: admin
+  password: zixing131
+
+# 有道发音本地缓存目录
+voice:
+  cache-dir: ./data/audio
+
+logging:
+  level:
+    com.study.kids: info

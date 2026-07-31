@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.study.kids.dao.PoemMapper">
+
+    <resultMap id="BaseMap" type="com.study.kids.entity.Poem">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="author" column="author"/>
+        <result property="dynasty" column="dynasty"/>
+        <result property="linesJson" column="lines_json"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="BaseMap">
+        SELECT * FROM poem ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT * FROM poem WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO poem (title, author, dynasty, lines_json, sort_order)
+        VALUES (#{title}, #{author}, #{dynasty}, #{linesJson}, #{sortOrder})
+    </insert>
+
+    <update id="update">
+        UPDATE poem
+        SET title = #{title},
+            author = #{author},
+            dynasty = #{dynasty},
+            lines_json = #{linesJson},
+            sort_order = #{sortOrder}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM poem WHERE id = #{id}
+    </delete>
+</mapper>
