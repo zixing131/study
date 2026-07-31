@@ -7,12 +7,17 @@ backend/bin/
 backend/.idea/
 *.iml
 *.log
+# 前端生产构建拷贝进来的产物（由 scripts/build-release.sh 生成）
+backend/src/main/resources/static/
 
 # frontend
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 
+# release / share 产物
+/dist/
+*-share-*.zip
+
 # os
 .DS_Store
-/dist
